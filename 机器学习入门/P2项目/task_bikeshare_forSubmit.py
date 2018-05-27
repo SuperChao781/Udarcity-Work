@@ -7,9 +7,20 @@ CITY_DATA = { 'chicago': 'chicago.csv',
               'washington': 'washington.csv' }
 
 city_list = ['chicago','new york city','washington'];
-month_list = ['all','January','February','March','April','May','June'];
-day_list = ['all','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'];
+month_list = ['all','january','february','march','april','may','june'];
+day_list = ['all','monday','tuesday','wednesday','thursday','friday','saturday','sunday'];
 
+           
+def Get_Items(inputList,Output,errorOutput):    
+    while(True):
+        inputString = input(Output + str(inputList));   
+        inputString = inputString.lower();   #输入取小写
+        if inputString in inputList:
+            return inputString;
+        else:
+            print(errorOutput);
+    
+           
 #接受输入 城市-月-日 并检查输入的正确性 输入错误时允许重复输入       
 def get_filters():
     """
@@ -22,31 +33,10 @@ def get_filters():
     """
     print('Hello! Let\'s explore some US bikeshare data!')
     # TO DO: get user input for city (chicago, new york city, washington). HINT: Use a while loop to handle invalid inputs
-    while(True):
-        city = input('Please input the city name,you can choose it from:' + str(city_list));        
-        if city in city_list:
-            break;
-        else:
-            print('Error!Please input the correct city name.');
-
-    # TO DO: get user input for month (all, january, february, ... , june)
-    while(True):
-        month = input('Please input the month name,you can choose it from：' + str(month_list));        
-        if month in month_list:
-            break;
-        else:
-            print('Error!Please input the correct month name.');
-
-
-    # TO DO: get user input for day of week (all, monday, tuesday, ... sunday)
-    while(True):
-        day = input('Please input the day name,you can choose it from：' + str(day_list));        
-        if day in day_list:
-            break;
-        else:
-            print('Error!Please input the correct day name.');
-
-
+    city = Get_Items(city_list,'Please input the city name,you can choose it from:','Error!Please input the correct city name.');
+    month = Get_Items(month_list,'Please input the month name,you can choose it from：','Error!Please input the correct month name.');
+    day = Get_Items(day_list,'Please input the day name,you can choose it from：','Error!Please input the correct day name.');
+    
     print('-'*40)
     return city, month, day
 
