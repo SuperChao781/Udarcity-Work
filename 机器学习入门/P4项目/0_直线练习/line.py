@@ -109,29 +109,26 @@ class Line(object):
     def __getitem__(self, item):
         return self.normal_vector.coordinates[item];
 
-
-    def location_judge(self, l):#判断两条直线的位置关系 返回值：0：平行 1：重合 2：相交
-        if(self.normal_vector.is_parallel_to(l.normal_vector)):#判断法向量是否平行
-#           判断两个向量是否为同一向量 
-            twopoint_vector = self.basepoint.minus(l.basepoint);#取两个直线上的基准向量的差
-            if(twopoint_vector.is_zero() or (twopoint_vector.is_orthogonal_to(self.normal_vector)) ):#判断该向量是否与当前法向量正交
-                return 1;#两向量重合
+    #判断两直线是否重合
+    def __eq__(self,l):
+        if(self.normal_vector.is_parallel_to(l.normal_vector)):
+            minus_vector = self.basepoint.minus(l.basepoint);
+            if(minus_vector.is_zero() or minus_vector.is_orthogonal_to(l.normal_vector)):#判断该向量是否与当前法向量正交
+                return True;
             else:
-                return 0;#两向量平行
+                return False;
+            
         else:
-            return 2;#两向量相交        
+            return False;
 
-    def is_cross_to(self,l):#判断是否相交
-        #获取2个法向量
-        vector1 = self.normal_vector;
-        vector2 = l.normal_vector;
-        return not (vector1.is_parallel_to(vector2));
-        
+    def is_parallel_to(self,l):
+        return (self.normal_vector.is_parallel_to(l.normal_vector));
+
 
     def calc_cross(self,l):#在2个向量既不平行也不重合的前提下，计算向量交点
         try:
-            result = self.is_cross_to(l);
-            if(result):
+            result = self.is_parallel_to(l);
+            if(not result):
                 #获取2个法向量的坐标
                 a1 = self[0];
                 b1 = self[1];
@@ -161,14 +158,13 @@ class MyDecimal(Decimal):
 
 def line_location(line1,line2):
     #判断两直线位置关系，如果相交，输出交点
-    location = line1.location_judge(line2);
     print('直线位置关系判断:')
     print('直线1:'+str(line1));
     print('直线2:'+str(line2));
-    if(location == 0):
-        print('直线位置关系判断结果:平行');
-    elif(location == 1):
+    if(line1==line2):
         print('直线位置关系判断结果:重合');
+    elif(line1.is_parallel_to(line2)):
+        print('直线位置关系判断结果:平行');
     else:
         cross = line1.calc_cross(line2);
         print('直线位置关系判断结果:相交，交点为:' + '(' + str(cross[0]) + ',' + str(cross[1]) + ')');
