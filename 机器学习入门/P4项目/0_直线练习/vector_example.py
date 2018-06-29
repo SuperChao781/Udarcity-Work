@@ -29,7 +29,7 @@ class Vector(object):
         return self.coordinates == v.coordinates
         
     def __iter__(self):
-        return self
+        return iter(self.coordinates)#本人更改
 
     def next(self):
         self.idx += 1
@@ -102,8 +102,8 @@ class Vector(object):
         return abs(self.dot(v)) < tolerance
 
    
-    def is_parallel_to(self, v):
-        return ( self.is_zero() or v.is_zero() or self.angle_with(v) == 0 or self.angle_with(v) == pi )
+    def is_parallel_to(self, v, tolerance=1e-4):#这里选择1e-4，是因为测角运算中的acos会将输入中的误差放大，导致平行向量返回的值不是0
+        return ( self.is_zero() or v.is_zero() or abs(self.angle_with(v)) < tolerance or abs(self.angle_with(v) - pi) < tolerance )
 
     
     def is_zero(self, tolerance=1e-10):
