@@ -122,6 +122,25 @@ class Plain(object):
         else:
             return False;
     
+    #平面方程倍乘函数 法向量和常数均乘以同一常数
+    def times_scalar(self, c):
+        product_vector = self.normal_vector.times_scalar(c);
+        product_constant = self.constant_term*c;
+        return Plain(product_vector,product_constant);
+
+    #平面方程相加，法向量、常数均相加
+    def plus(self, v):
+        sum_vector = self.normal_vector.plus(v.normal_vector);
+        sum_constant = self.constant_term+v.constant_term;
+        return Plain(sum_vector,sum_constant);
+
+    #平面方程相减，法向量、常数均相减
+    def minus(self, v):
+        sum_vector = self.normal_vector.minus(v.normal_vector);
+        sum_constant = self.constant_term-v.constant_term;
+        return Plain(sum_vector,sum_constant);
+
+    
     #判断两平面是否平行
     def is_parallel_to(self,l):
         return (self.normal_vector.is_parallel_to(l.normal_vector));
@@ -163,8 +182,6 @@ def main():
     myplain2 = Plain([-2.692,2.875,-2.404],-2.443);
     plain_location(myplain1,myplain2)
     
-    
-
 if __name__ == "__main__":
 	main()             
         
