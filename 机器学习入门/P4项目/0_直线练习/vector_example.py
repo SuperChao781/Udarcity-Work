@@ -83,7 +83,7 @@ class Vector(object):
         try:
             u1 = self.normalized()
             u2 = v.normalized()
-            angle_in_radians = acos(u1.dot(u2))
+            angle_in_radians = acos(Decimal(u1.dot(u2)).quantize(Decimal('0.0000')));#对点积结果截取是防止当2个向量一样时，运算精度导致出现大于1的点积
 
             if in_degrees:
                 degrees_per_radian = 180. /pi

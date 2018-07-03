@@ -132,6 +132,13 @@ class MyDecimal(Decimal):
     def is_near_zero(self, eps=1e-10):
         return abs(self) < eps
 
+def LinearSystem_print(s,output_string):
+    print('****************')
+    print(output_string)
+    print(s)
+    print('****************')
+
+    
 
 
 def main():
@@ -163,29 +170,46 @@ def main():
     
     s = LinearSystem([p0,p1,p2,p3])
     
+    LinearSystem_print(s,'原始方程组')
     #交换等式
     s.swap_rows(0,1)
+    print(s[2].normal_vector.is_parallel_to(p2.normal_vector))
     if not (s[0] == p1 and s[1] == p0 and s[2] == p2 and s[3] == p3):
         print('test case 1 failed')
+    else:
+        print('test case 1 successed')
+    LinearSystem_print(s,'交换1-2行')
     
     s.swap_rows(1,3)
     if not (s[0] == p1 and s[1] == p3 and s[2] == p2 and s[3] == p0):
         print('test case 2 failed')
+    else:
+        print('test case 2 successed')
+    LinearSystem_print(s,'交换2-4行')
     
     s.swap_rows(3,1)
     if not (s[0] == p1 and s[1] == p0 and s[2] == p2 and s[3] == p3):
         print('test case 3 failed')
-    
+    else:
+        print('test case 3 successed')
+    LinearSystem_print(s,'交换4-2行')
+   
     s.multiply_coefficient_and_row(1,0)
     if not (s[0] == p1 and s[1] == p0 and s[2] == p2 and s[3] == p3):
         print('test case 4 failed')
-    
+    else:
+        print('test case 4 successed')
+    LinearSystem_print(s,'方程1乘1')
+
     s.multiply_coefficient_and_row(-1,2)
     if not (s[0] == p1 and
             s[1] == p0 and
             s[2] == Plain(normal_vector=Vector(['-1','-1','1']), constant_term='-3') and
             s[3] == p3):
         print('test case 5 failed')
+    else:
+        print('test case 5 successed')
+    LinearSystem_print(s,'方程3乘-1')
     
     s.multiply_coefficient_and_row(10,1)
     if not (s[0] == p1 and
@@ -193,6 +217,9 @@ def main():
             s[2] == Plain(normal_vector=Vector(['-1','-1','1']), constant_term='-3') and
             s[3] == p3):
         print('test case 6 failed')
+    else:
+        print('test case 6 successed')
+    LinearSystem_print(s,'方程2乘10')
     
     s.add_multiple_times_row_to_row(0,0,1)
     if not (s[0] == p1 and
@@ -200,6 +227,9 @@ def main():
             s[2] == Plain(normal_vector=Vector(['-1','-1','1']), constant_term='-3') and
             s[3] == p3):
         print('test case 7 failed')
+    else:
+        print('test case 7 successed')
+    LinearSystem_print(s,'方程1乘0，加到方程2')
     
     s.add_multiple_times_row_to_row(1,0,1)
     if not (s[0] == p1 and
@@ -207,6 +237,9 @@ def main():
             s[2] == Plain(normal_vector=Vector(['-1','-1','1']), constant_term='-3') and
             s[3] == p3):
         print('test case 8 failed')
+    else:
+        print('test case 8 successed')
+    LinearSystem_print(s,'方程1乘1，加到方程2')
     
     s.add_multiple_times_row_to_row(-1,1,0)
     if not (s[0] == Plain(normal_vector=Vector(['-10','-10','-10']), constant_term='-10') and
@@ -214,6 +247,9 @@ def main():
             s[2] == Plain(normal_vector=Vector(['-1','-1','1']), constant_term='-3') and
             s[3] == p3):
         print('test case 9 failed')
+    else:
+        print('test case 9 successed')
+    LinearSystem_print(s,'方程2乘-1，加到方程1')
 
     
 if __name__ == "__main__":
