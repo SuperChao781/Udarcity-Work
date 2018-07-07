@@ -112,15 +112,20 @@ class Plain(object):
 
     #判断两平面是否重合
     def __eq__(self,l):
-        if(self.normal_vector.is_parallel_to(l.normal_vector)):
+        if(self.normal_vector.is_zero() and l.normal_vector.is_zero()):#都是零向量
+            return True;
+        elif(self.normal_vector.is_zero() or l.normal_vector.is_zero()):#其中之一是零向量
+            return False;
+        elif(self.normal_vector.is_parallel_to(l.normal_vector)):
             minus_vector = self.basepoint.minus(l.basepoint);
             if(minus_vector.is_zero() or minus_vector.is_orthogonal_to(l.normal_vector)):#判断该向量是否与当前法向量正交
                 return True;
             else:
                 return False;
-            
         else:
             return False;
+            
+        
     
     #平面方程倍乘函数 法向量和常数均乘以同一常数
     def times_scalar(self, c):

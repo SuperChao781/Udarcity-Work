@@ -4,7 +4,7 @@ from copy import deepcopy
 from vector_example import Vector
 from plain import Plain
 
-getcontext().prec = 30
+getcontext().prec = 10
 
 
 class LinearSystem(object):
@@ -126,6 +126,42 @@ class LinearSystem(object):
                 return;
             else:
                 raise e
+                
+    def eliminate(self,e_start,coefficient_index):#消去从指定行开始的指定未知数系数（起始行e_start除外）      
+        if(MyDecimal(self[e_start][coefficient_index]).is_near_zero()):
+            return;#首行的指定系数为0，无法执行消元
+        else:
+            for i in range(e_start+1,len(self)):
+                multiple = -1*(self[i][coefficient_index]/self[e_start][coefficient_index]);#计算被消元行系数相对于基准行系数的倍数的相反数
+                self.add_multiple_times_row_to_row(multiple,e_start,i);#将基准行乘以该负倍率数，然后加到被消元行上
+                
+    def rowindex_of_first_nonzero_for_coefficient(self,e_start,coefficient_index):#寻找指定行开始，第1个指定未知数系数不为0的行
+        for i in range(e_start,len(self)):
+            if(not MyDecimal(self[i][coefficient_index]).is_near_zero() ):
+                return i;
+        return -1;#从指定行开始，所有行指定未知数的系数均为0
+
+    def compute_triangular_form(self):
+        e_start = 0;#消元首行
+        coefficient_index = 0;#当前消元对象 0代表第1个未知数，1代表第2个未知数，依此类推
+        #复制一个原始向量
+        triangular_form = deepcopy(self);
+        
+        while(coefficient_index<triangular_form.dimension and e_start<len(triangular_form)):#如果已经消元到最后一行，或者所有系数都进行了一轮消元，则终止流程
+            non_zero_row_index = triangular_form.rowindex_of_first_nonzero_for_coefficient(e_start,coefficient_index);
+            if(non_zero_row_index < 0):#没有必要消元
+                 coefficient_index += 1;
+                 continue;
+            elif(non_zero_row_index != e_start):#基准行的未知数系数是0，需要和后面的行交换
+                triangular_form.swap_rows(e_start,non_zero_row_index);
+            else:#基准行的未知数系数非0，可以作为基准
+                pass
+        
+            triangular_form.eliminate(e_start,coefficient_index);#以e_start行为基准，消去其后所有行的指定未知数系数
+            e_start += 1;
+            coefficient_index += 1;                
+        return triangular_form;
+
 
 
 class MyDecimal(Decimal):
@@ -139,9 +175,8 @@ def LinearSystem_print(s,output_string):
     print('****************')
 
     
-
-
-def main():
+    
+def test1():#测试线性方程组的基本操作
     #********************************************
     #判断两直线位置关系，如果相交，输出交点
     
@@ -250,6 +285,80 @@ def main():
     else:
         print('test case 9 successed')
     LinearSystem_print(s,'方程2乘-1，加到方程1')
+    
+def test2():#线性方程组阶梯化
+    
+    p1 = Plain(normal_vector=Vector(['1','1','1']), constant_term='1')
+    p2 = Plain(normal_vector=Vector(['0','1','1']), constant_term='2')
+    s = LinearSystem([p1,p2])
+    t = s.compute_triangular_form()
+    print('*******************************')
+    if not (t[0] == p1 and
+            t[1] == p2):
+        print('test case 1 failed')
+    else:
+        print('test case 1 successed')
+        LinearSystem_print(s,'原始方程')
+        LinearSystem_print(t,'阶梯化后方程')
+    print('*******************************')
+    
+    p1 = Plain(normal_vector=Vector(['1','1','1']), constant_term='1')
+    p2 = Plain(normal_vector=Vector(['1','1','1']), constant_term='2')
+    s = LinearSystem([p1,p2])
+    t = s.compute_triangular_form()
+    print('*******************************')
+    if not (t[0] == p1 and
+            t[1] == Plain(constant_term='1')):
+        print('test case 2 failed')
+    else:
+        print('test case 2 successed')
+        LinearSystem_print(s,'原始方程')
+        LinearSystem_print(t,'阶梯化后方程')
+    print('*******************************')
+       
+    p1 = Plain(normal_vector=Vector(['1','1','1']), constant_term='1')
+    p2 = Plain(normal_vector=Vector(['0','1','0']), constant_term='2')
+    p3 = Plain(normal_vector=Vector(['1','1','-1']), constant_term='3')
+    p4 = Plain(normal_vector=Vector(['1','0','-2']), constant_term='2')
+    s = LinearSystem([p1,p2,p3,p4])
+    t = s.compute_triangular_form()
+    print('*******************************')
+    if not (t[0] == p1 and
+            t[1] == p2 and
+            t[2] == Plain(normal_vector=Vector(['0','0','-2']), constant_term='2') and
+            t[3] == Plain()):
+        print('test case 3 failed')
+    else:
+        print('test case 3 successed')
+        LinearSystem_print(s,'原始方程')
+        LinearSystem_print(t,'阶梯化后方程')
+    print('*******************************')
+    
+    p1 = Plain(normal_vector=Vector(['0','1','1']), constant_term='1')
+    p2 = Plain(normal_vector=Vector(['1','-1','1']), constant_term='2')
+    p3 = Plain(normal_vector=Vector(['1','2','-5']), constant_term='3')
+    s = LinearSystem([p1,p2,p3])
+    t = s.compute_triangular_form()
+    print('*******************************')
+    if not (t[0] == Plain(normal_vector=Vector(['1','-1','1']), constant_term='2') and
+            t[1] == Plain(normal_vector=Vector(['0','1','1']), constant_term='1') and
+            t[2] == Plain(normal_vector=Vector(['0','0','-9']), constant_term='-2')):
+        print('test case 4 failed')
+    else:
+        print('test case 4 successed')
+        LinearSystem_print(s,'原始方程')
+        LinearSystem_print(t,'阶梯化后方程')
+    print('*******************************')
+    
+    
+    
+    
+    
+
+
+def main():
+    #test1();
+    test2();
 
     
 if __name__ == "__main__":
