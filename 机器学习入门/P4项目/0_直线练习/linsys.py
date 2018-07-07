@@ -127,39 +127,44 @@ class LinearSystem(object):
             else:
                 raise e
                 
-    def eliminate(self,e_start,coefficient_index):#消去从指定行开始的指定未知数系数（起始行e_start除外）      
-        if(MyDecimal(self[e_start][coefficient_index]).is_near_zero()):
+    def eliminate(self,row_start,col):#消去从指定行开始的指定未知数系数（起始行row_start除外）      
+        if(MyDecimal(self[row_start][col]).is_near_zero()):
             return;#首行的指定系数为0，无法执行消元
         else:
-            for i in range(e_start+1,len(self)):
-                multiple = -1*(self[i][coefficient_index]/self[e_start][coefficient_index]);#计算被消元行系数相对于基准行系数的倍数的相反数
-                self.add_multiple_times_row_to_row(multiple,e_start,i);#将基准行乘以该负倍率数，然后加到被消元行上
+            for i in range(row_start+1,len(self)):
+                multiple = -1*(self[i][col]/self[row_start][col]);#计算被消元行系数相对于基准行系数的倍数的相反数
+                self.add_multiple_times_row_to_row(multiple,row_start,i);#将基准行乘以该负倍率数，然后加到被消元行上
                 
-    def rowindex_of_first_nonzero_for_coefficient(self,e_start,coefficient_index):#寻找指定行开始，第1个指定未知数系数不为0的行
-        for i in range(e_start,len(self)):
-            if(not MyDecimal(self[i][coefficient_index]).is_near_zero() ):
+    def rowindex_of_first_nonzero_for_coefficient(self,row_start,col):#寻找指定行开始，第1个指定未知数系数不为0的行
+        num_equation = len(self);
+        for i in range(row_start,num_equation):
+            if(not MyDecimal(self[i][col]).is_near_zero() ):
                 return i;
         return -1;#从指定行开始，所有行指定未知数的系数均为0
 
     def compute_triangular_form(self):
-        e_start = 0;#消元首行
-        coefficient_index = 0;#当前消元对象 0代表第1个未知数，1代表第2个未知数，依此类推
+        row_start = 0;#消元首行
+        col = 0;#当前消元对象，0代表第1个未知数，1代表第2个未知数，依此类推
+                
         #复制一个原始向量
         triangular_form = deepcopy(self);
+
+        num_variable = triangular_form.dimension;
+        num_equation = len(triangular_form);
         
-        while(coefficient_index<triangular_form.dimension and e_start<len(triangular_form)):#如果已经消元到最后一行，或者所有系数都进行了一轮消元，则终止流程
-            non_zero_row_index = triangular_form.rowindex_of_first_nonzero_for_coefficient(e_start,coefficient_index);
+        while(col < num_variable and row_start < num_equation):#如果已经消元到最后一行，或者所有系数都进行了一轮消元，则终止流程
+            non_zero_row_index = triangular_form.rowindex_of_first_nonzero_for_coefficient(row_start,col);
             if(non_zero_row_index < 0):#没有必要消元
-                 coefficient_index += 1;
+                 col += 1;
                  continue;
-            elif(non_zero_row_index != e_start):#基准行的未知数系数是0，需要和后面的行交换
-                triangular_form.swap_rows(e_start,non_zero_row_index);
+            elif(non_zero_row_index != row_start):#基准行的未知数系数是0，需要和后面的行交换
+                triangular_form.swap_rows(row_start,non_zero_row_index);
             else:#基准行的未知数系数非0，可以作为基准
                 pass
         
-            triangular_form.eliminate(e_start,coefficient_index);#以e_start行为基准，消去其后所有行的指定未知数系数
-            e_start += 1;
-            coefficient_index += 1;                
+            triangular_form.eliminate(row_start,col);#以row_start行为基准，消去其后所有行的指定未知数系数
+            row_start += 1;
+            col += 1;                
         return triangular_form;
 
 
