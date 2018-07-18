@@ -69,10 +69,13 @@ def analyse_data(df):
     print(' ')
     print('***绘图显示各收入级别的电影特征***')
     popularity_mean.plot(kind='bar', title='Average popularity by revenue level');
+    plt.ylabel('average popularity');
     plt.show()
     voter_mean.plot(kind='bar', title='Average voter count by revenue level');
+    plt.ylabel('average voter count');
     plt.show()
     budget_mean.plot(kind='bar', title='Average budget count by revenue level');
+    plt.ylabel('average budget');
     plt.show()
     
     
@@ -80,22 +83,20 @@ def analyse_data(df):
     df_genres = pd.DataFrame();
     
     #建立一个新数据 储存每个电影的风格及平均受欢迎程度、平均收入
-    genres_list = [];
-    for i in list(df.index):
-        genres_list = df.loc[i]['genres'].split('|');
-        for genres in genres_list:
-            df_genres=df_genres.append(pd.Series([i,genres,df.loc[i]['popularity'],df.loc[i]['revenue_level'],df.loc[i]['original_title']]),ignore_index=True);
-    df_genres.columns = ['index','genres','popularity','revenue_level','original_title'];
+
+    genres = df['genres'].str.split('|',expand=True).stack().reset_index(level=1,drop=True).rename('genres_separate');
+    
+    df_genres = df.join(genres);
 
     #统计所有电影风格
-    genres_list = list(df_genres['genres'].value_counts().index);
+    genres_list = list(df_genres['genres_separate'].value_counts().index);
     
     
     #绘出各个电影风格的收入等级对比
     print(' ')
     print('***绘图显示每种电影风格中各个收入等级数量对比***')
     for genres in genres_list:
-        df_genres_revenue = df_genres[df_genres['genres'] == genres];
+        df_genres_revenue = df_genres[df_genres['genres_separate'] == genres];
         df_genres_revenue['revenue_level'].value_counts().plot(kind='pie');       
         plt.title('revenue_level  for genres:'+ genres);
         plt.show()
@@ -142,31 +143,31 @@ def analyse_data(df):
     print('*********演员分析*********')
     df_cast = pd.DataFrame();
     #建立一个新数据 储存每个演员演出的每部电影的受欢迎程度、电影评分和平均收入
-    for i in list(df.index):
-        cast_list = df.loc[i]['cast'].split('|');
-        for cast in cast_list:
-            df_cast=df_cast.append(pd.Series([i,cast,df.loc[i]['popularity'],df.loc[i]['vote_average'],df.loc[i]['revenue_adj'],df.loc[i]['original_title']]),ignore_index=True);
-    df_cast.columns = ['index','cast','popularity','vote_average','revenue_adj','original_title']
-                                 
+    cast = df['cast'].str.split('|',expand=True).stack().reset_index(level=1,drop=True).rename('cast_separate');
     
+    df_cast = df.join(cast);
+    df_cast.reset_index(inplace=True);
+
     #分析所有演员出演电影数量
-    df_cast_value_count = df_cast['cast'].value_counts();
+    df_cast_value_count = df_cast['cast_separate'].value_counts();
     #将演员的出演电影数量按5为间隔分为5个等级 如下：
     df_cast_value_count = df_cast_value_count.to_frame();
     cut_list=list(np.arange(0,51,5));#产生分割序列
     cut_label=['{0}_{1}'.format(x+1,x+5) for x in cut_list];#产生分割序列标号
     cut_label.pop();#删掉最后一个
-    df_cast_value_count['cast_filmNum']=pd.cut(df_cast_value_count['cast'],bins=cut_list,labels=cut_label);
+    df_cast_value_count['cast_filmNum']=pd.cut(df_cast_value_count['cast_separate'],bins=cut_list,labels=cut_label);
     #统计各个数量等级的演员数
     print(' ')
     print('***演员参演电影数量分布***')
     df_cast_num_value_count=df_cast_value_count['cast_filmNum'].value_counts();   
     df_cast_num_value_count = df_cast_num_value_count.sort_index();
     df_cast_num_value_count.plot(kind='bar')
+    plt.xlabel('the number of movies the actros took part in')
+    plt.ylabel('the number of actors who fit the x-axis')
     plt.show()
         
     #筛选出在数据中出演了超过5部电影的演员
-    df_cast_value_count = df_cast_value_count[df_cast_value_count['cast']>5];
+    df_cast_value_count = df_cast_value_count[df_cast_value_count['cast_separate']>5];
     
     
     #列出出演电影数量最高的前5名演员
@@ -180,11 +181,11 @@ def analyse_data(df):
     #从演员数据中删去所有出演电影数量不超过5部的演员数据
     df_cast_morethan_five = pd.DataFrame();
     for i in range(len(df_cast)):
-        if(df_cast.loc[i]['cast'] in df_cast_value_count['cast']):
+        if(df_cast.loc[i]['cast_separate'] in df_cast_value_count['cast_separate']):
             df_cast_morethan_five = df_cast_morethan_five.append(df_cast.loc[i]);
 
     #列出出演电影平均评分最高的前5名演员
-    cast_average_vote_average = df_cast_morethan_five.groupby('cast').mean()['vote_average'];
+    cast_average_vote_average = df_cast_morethan_five.groupby('cast_separate').mean()['vote_average'];
     cast_list = [];
     vote_average_list = [];
     for i in range(5):
@@ -199,7 +200,7 @@ def analyse_data(df):
 
     #绘出这5名演员参演电影的评分
     for i in range(len(cast_list)):
-        df_cast_forone = df_cast[df_cast['cast']==cast_list[i]];
+        df_cast_forone = df_cast[df_cast['cast_separate']==cast_list[i]];
         df_cast_forone = df_cast_forone.sort_values(by=['vote_average'],ascending = False)
         df_cast_forone.index = df_cast_forone['original_title'];
         df_cast_forone['vote_average'].plot(kind='bar');
@@ -208,15 +209,15 @@ def analyse_data(df):
         plt.show()
     
     #补充 绘出卢克 天行者扮演者和哈利 波特扮演者的数据
-    df_cast_forone = df_cast[df_cast['cast']=='Mark Hamill'];
+    df_cast_forone = df_cast[df_cast['cast_separate']=='Mark Hamill'];
     df_cast_forone = df_cast_forone.sort_values(by=['vote_average'],ascending = False)
 
-    df_cast_forone = df_cast[df_cast['cast']=='Daniel Radcliffe'];
+    df_cast_forone = df_cast[df_cast['cast_separate']=='Daniel Radcliffe'];
     df_cast_forone = df_cast_forone.sort_values(by=['vote_average'],ascending = False)
 
 
     #列出出演电影平均受欢迎程度最高的前5名演员
-    cast_average_popularity = df_cast_morethan_five.groupby('cast').mean()['popularity'];
+    cast_average_popularity = df_cast_morethan_five.groupby('cast_separate').mean()['popularity'];
     cast_list = [];
     popularity_list = [];
     for i in range(5):
@@ -233,7 +234,7 @@ def analyse_data(df):
     print(' ')
     print('上述5名演员出演的所有电影受欢迎程度:')
     for i in range(len(cast_list)):
-        df_cast_forone = df_cast[df_cast['cast']==cast_list[i]];
+        df_cast_forone = df_cast[df_cast['cast_separate']==cast_list[i]];
         df_cast_forone = df_cast_forone.sort_values(by=['popularity'],ascending = False)
         df_cast_forone.index = df_cast_forone['original_title'];
         df_cast_forone['popularity'].plot(kind='bar');
@@ -244,7 +245,7 @@ def analyse_data(df):
     #给出莱昂纳多和摩根弗里曼参演电影的受欢迎程度
     print(' ')
     print('莱昂纳多出演的所有电影受欢迎程度:')
-    df_cast_forone = df_cast[df_cast['cast']=='Leonardo DiCaprio'];
+    df_cast_forone = df_cast[df_cast['cast_separate']=='Leonardo DiCaprio'];
     df_cast_forone = df_cast_forone.sort_values(by=['popularity'],ascending = False)
     df_cast_forone.index = df_cast_forone['original_title'];
     df_cast_forone['popularity'].plot(kind='bar');
@@ -253,7 +254,7 @@ def analyse_data(df):
     plt.show()    
     print(' ')
     print('摩根弗里曼出演的所有电影受欢迎程度:')
-    df_cast_forone = df_cast[df_cast['cast']=='Morgan Freeman'];
+    df_cast_forone = df_cast[df_cast['cast_separate']=='Morgan Freeman'];
     df_cast_forone = df_cast_forone.sort_values(by=['popularity'],ascending = False)
     df_cast_forone.index = df_cast_forone['original_title'];
     df_cast_forone['popularity'].plot(kind='bar');
