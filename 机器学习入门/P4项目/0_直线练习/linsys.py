@@ -135,13 +135,14 @@ class LinearSystem(object):
                 multiple = -1*(self[i][col]/self[row_start][col]);#计算被消元行系数相对于基准行系数的倍数的相反数
                 self.add_multiple_times_row_to_row(multiple,row_start,i);#将基准行乘以该负倍率数，然后加到被消元行上
                 
-    def rowindex_of_first_nonzero_for_coefficient(self,row_start,col):#寻找指定行开始，第1个指定未知数系数不为0的行
+    def rowindex_of_first_nonzero_for_coefficient(self,row_start,col):#寻找从指定行开始，第1个指定未知数系数不为0的行
         num_equation = len(self);
         for i in range(row_start,num_equation):
             if(not MyDecimal(self[i][col]).is_near_zero() ):
                 return i;
         return -1;#从指定行开始，所有行指定未知数的系数均为0
 
+    #将原方程组化为阶梯方程组
     def compute_triangular_form(self):
         row_start = 0;#消元首行
         col = 0;#当前消元对象，0代表第1个未知数，1代表第2个未知数，依此类推
@@ -154,7 +155,7 @@ class LinearSystem(object):
         
         while(col < num_variable and row_start < num_equation):#如果已经消元到最后一行，或者所有系数都进行了一轮消元，则终止流程
             non_zero_row_index = triangular_form.rowindex_of_first_nonzero_for_coefficient(row_start,col);
-            if(non_zero_row_index < 0):#没有必要消元
+            if(non_zero_row_index < 0):#第col列系数全为0，没有必要消元
                  col += 1;
                  continue;
             elif(non_zero_row_index != row_start):#基准行的未知数系数是0，需要和后面的行交换
@@ -166,7 +167,52 @@ class LinearSystem(object):
             row_start += 1;
             col += 1;                
         return triangular_form;
-
+        
+    #消除指定行前的所有行的指定未知数系数  默认指定行的指定未知数系数为1（主元主列已执行行简化的第1步）
+    def SetTheSpecifiedColOfPreviousRowToZero(self,currentRow,currentCol):
+        row = 0;
+        k = 0;#取当前行的指定列系数
+        
+        while(row<currentRow):
+            k = self[row][currentCol];
+            if(k != 0):
+                self.add_multiple_times_row_to_row(-1*k, currentRow, row);
+            row+=1; 
+                
+        
+        
+    #将原方程组化为行简化阶梯方程组
+    def compute_rref(self):
+        tf = self.compute_triangular_form();
+        
+        #num_variable = tf.dimension;
+        num_equation = len(tf);
+        row = 0;
+        pivot_col = 0;
+        pivot_coe = 0;#主元系数
+        
+        while(row < num_equation):
+            #寻找主元
+            try:
+                pivot_col = Plain.first_nonzero_index(tf[row].normal_vector);#获取主元所在列
+                pivot_coe = tf[row][pivot_col];
+            except Exception as e:
+                if str(e) == tf[row].NO_NONZERO_ELTS_FOUND_MSG:#该列无主元
+                    if(not MyDecimal(tf[row].constant_term).is_near_zero()):#检查是否为0=k
+                        tf[row].constant_term = 1;#更改为0=1   
+                    pivot_coe = 0;
+                else:
+                    raise e
+        
+            #处理第row行，将主元系数化为1
+            if(not MyDecimal(pivot_coe).is_near_zero()):#之前检查是否有主元?
+                tf.multiply_coefficient_and_row(1/pivot_coe,row);
+                #将第row行之前的行中与第row行主元列同列的系数全部清0
+                tf.SetTheSpecifiedColOfPreviousRowToZero(row,pivot_col);
+            
+            row+=1;                                        
+        
+        return tf;
 
 
 class MyDecimal(Decimal):
@@ -356,15 +402,67 @@ def test2():#线性方程组阶梯化
     print('*******************************')
     
     
+def test3():#线性方程组化简为行简化阶梯方程组    
+    p1 = Plain(normal_vector=Vector(['1','1','1']), constant_term='1')
+    p2 = Plain(normal_vector=Vector(['0','1','1']), constant_term='2')
+    s = LinearSystem([p1,p2])
+    r = s.compute_rref()
+    if not (r[0] == Plain(normal_vector=Vector(['1','0','0']), constant_term='-1') and
+            r[1] == p2):
+        print('test case 1 failed')
+    else:
+        print('test case 1 successed')
+        LinearSystem_print(s,'原始方程')
+        LinearSystem_print(r,'行简化阶梯化后方程')
     
+    p1 = Plain(normal_vector=Vector(['1','1','1']), constant_term='1')
+    p2 = Plain(normal_vector=Vector(['1','1','1']), constant_term='2')
+    s = LinearSystem([p1,p2])
+    r = s.compute_rref()
+    if not (r[0] == p1 and
+            r[1] == Plain(constant_term='1')):
+        print('test case 2 failed')
+    else:
+        print('test case 2 successed')
+        LinearSystem_print(s,'原始方程')
+        LinearSystem_print(r,'行简化阶梯化后方程')
     
+    p1 = Plain(normal_vector=Vector(['1','1','1']), constant_term='1')
+    p2 = Plain(normal_vector=Vector(['0','1','0']), constant_term='2')
+    p3 = Plain(normal_vector=Vector(['1','1','-1']), constant_term='3')
+    p4 = Plain(normal_vector=Vector(['1','0','-2']), constant_term='2')
+    s = LinearSystem([p1,p2,p3,p4])
+    r = s.compute_rref()
+    if not (r[0] == Plain(normal_vector=Vector(['1','0','0']), constant_term='0') and
+            r[1] == p2 and
+            r[2] == Plain(normal_vector=Vector(['0','0','-2']), constant_term='2') and
+            r[3] == Plain()):
+        print('test case 3 failed')
+    else:
+        print('test case 3 successed')
+        LinearSystem_print(s,'原始方程')
+        LinearSystem_print(r,'行简化阶梯化后方程')
     
+    p1 = Plain(normal_vector=Vector(['0','1','1']), constant_term='1')
+    p2 = Plain(normal_vector=Vector(['1','-1','1']), constant_term='2')
+    p3 = Plain(normal_vector=Vector(['1','2','-5']), constant_term='3')
+    s = LinearSystem([p1,p2,p3])
+    r = s.compute_rref()
+    if not (r[0] == Plain(normal_vector=Vector(['1','0','0']), constant_term=Decimal('23')/Decimal('9')) and
+            r[1] == Plain(normal_vector=Vector(['0','1','0']), constant_term=Decimal('7')/Decimal('9')) and
+            r[2] == Plain(normal_vector=Vector(['0','0','1']), constant_term=Decimal('2')/Decimal('9'))):
+        print('test case 4 failed')   
+    else:
+        print('test case 4 successed')
+        LinearSystem_print(s,'原始方程')
+        LinearSystem_print(r,'行简化阶梯化后方程')
+   
 
 
 def main():
     #test1();
-    test2();
-
+    #test2();
+    test3();
     
 if __name__ == "__main__":
 	main()        
